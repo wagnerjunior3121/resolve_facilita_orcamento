@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import logo from "./assets/logo/logo.png";
 
 const styles = `
@@ -160,6 +160,23 @@ const styles = `
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
+  }
+
+  .signature-pad {
+    border: 2px dashed #e0e0e0;
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 12px;
+    text-align: center;
+    background: #fff;
+  }
+
+  .signature-canvas {
+    width: 100%;
+    height: 150px;
+    touch-action: none;
+    border-radius: 6px;
+    background: #fff;
   }
 
   @media (max-width: 1024px) {
@@ -387,6 +404,79 @@ export default function LaudoTecnico({ onBack }: LaudoProps) {
   };
 
   const [observacoes, setObservacoes] = useState("");
+  // Signature pad state
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isDrawing = useRef(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const ratio = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    canvas.width = Math.floor(width * ratio);
+    canvas.height = Math.floor(height * ratio);
+    ctx.scale(ratio, ratio);
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 2.5;
+  }, []);
+
+  const getPointerPos = (e: PointerEvent | MouseEvent | TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    if ((e as TouchEvent).touches) {
+      const t = (e as TouchEvent).touches[0];
+      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    }
+    const ev = e as MouseEvent | PointerEvent;
+    return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+  };
+
+  const startDraw = (e: React.PointerEvent<HTMLCanvasElement> | React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    isDrawing.current = true;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPointerPos(e.nativeEvent, canvas);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  };
+
+  const draw = (e: React.PointerEvent<HTMLCanvasElement> | React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !isDrawing.current) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const pos = getPointerPos(e.nativeEvent, canvas);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  };
+
+  const endDraw = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    isDrawing.current = false;
+    const data = canvas.toDataURL("image/png");
+    // If canvas is blank, don't save
+    if (data === canvas.toDataURL()) {
+      setSignatureDataUrl(data);
+    } else {
+      setSignatureDataUrl(data);
+    }
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setSignatureDataUrl(undefined);
+  };
 
   const adicionarProblema = () => {
     if (problemaAtual.descricao.trim()) {
@@ -410,30 +500,39 @@ export default function LaudoTecnico({ onBack }: LaudoProps) {
       doc.text("RESOLVE FACILITA", 105, 20, { align: "center" });
 
       doc.setFontSize(10);
-      doc.text(
-        `CPF/CNPJ: 26.083.727/0001-73 - IE: 564.114.999.110
-Endereço: AV OSHIGUE MIFUNE, nº 87 - JARDIM PAULISTANO - PROMISSÃO - SP - CEP: 16.377-706
-Tel: (14) 99147-1730
-E-mails: resolvefacilita2024@gmail.com - barbosaederson1@hotmail.com
-Data: ${new Date().toLocaleDateString()}`,
-        10,
-        40
-      );
+      const headerLines = [
+        "CPF/CNPJ: 26.083.727/0001-73 - IE: 564.114.999.110",
+        "Registro Nacional: 3.087.162.582-8",
+        "Endereço: AV OSHIGUE MIFUNE, nº 87 - JARDIM PAULISTANO - PROMISSÃO - SP - CEP: 16.377-706",
+        "Tel: (14) 99147-1730",
+        "E-mails: resolvefacilita2024@gmail.com - barbosaederson1@hotmail.com",
+        `Data: ${new Date().toLocaleDateString()}`,
+      ];
+      // center the header block under the title with controlled spacing
+      const headerStartY = 24;
+      const headerLineHeight = 5; // small spacing to keep block compact
+      headerLines.forEach((line, idx) => {
+        doc.text(line, 105, headerStartY + idx * headerLineHeight, { align: "center" });
+      });
 
       doc.setFontSize(12);
       doc.text("LAUDO TÉCNICO", 105, 60, { align: "center" });
 
       doc.setFontSize(10);
       doc.text("CLIENTE:", 10, 75);
-      doc.text(
-        `Nome: ${cliente.nome}
-Telefone: ${cliente.telefone}
-Email: ${cliente.email}
-CPF: ${cliente.cpf}
-Endereço: ${cliente.endereco}, ${cliente.bairro} - ${cliente.cidade}, ${cliente.uf} - CEP: ${cliente.cep}`,
-        10,
-        80
-      );
+      // print client fields as separate lines to avoid indentation/paragraph issues
+      const clientLines = [
+        `Nome: ${cliente.nome}`,
+        `Telefone: ${cliente.telefone}`,
+        `Email: ${cliente.email}`,
+        `CPF: ${cliente.cpf}`,
+        `Endereço: ${cliente.endereco}, ${cliente.bairro} - ${cliente.cidade}, ${cliente.uf} - CEP: ${cliente.cep}`,
+      ];
+      const clientStartY = 80;
+      const clientLineHeight = 6;
+      clientLines.forEach((line, idx) => {
+        doc.text(line, 10, clientStartY + idx * clientLineHeight);
+      });
 
       doc.text("PROBLEMAS ENCONTRADOS:", 10, 115);
       let y = 120;
@@ -471,7 +570,27 @@ Endereço: ${cliente.endereco}, ${cliente.bairro} - ${cliente.cidade}, ${cliente
         doc.text(observacoes, 10, y, { maxWidth: 190 });
       }
 
-      doc.text("RESOLVE FACILITA - EDERSON BARBOSA", 105, 270, {
+      // If there's a signature, add it above the footer
+      let footerY = 270;
+      if (typeof signatureDataUrl !== "undefined" && signatureDataUrl) {
+        try {
+          const sigType = signatureDataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+          const sigW = 60;
+          const sigH = 30;
+          if (y + sigH + 20 > 260) {
+            doc.addPage();
+            footerY = 260;
+          }
+          doc.addImage(signatureDataUrl, sigType as any, 105 - sigW / 2, footerY - 30, sigW, sigH);
+          doc.setFontSize(10);
+          doc.text("Assinatura do responsável", 105, footerY, { align: "center" });
+          footerY += 12;
+        } catch (e) {
+          // ignore signature insertion errors
+        }
+      }
+
+      doc.text("RESOLVE FACILITA - EDERSON BARBOSA", 105, footerY + 10, {
         align: "center",
       });
 
@@ -601,6 +720,29 @@ Endereço: ${cliente.endereco}, ${cliente.bairro} - ${cliente.cidade}, ${cliente
               placeholder="Adicione observações gerais sobre o laudo"
               style={{ height: "120px", resize: "vertical" }}
             />
+          </div>
+
+          <h3 className="section-title">✍️ Assinatura</h3>
+          <div className="input-group">
+            <label>Assinatura do responsável (desenhe abaixo)</label>
+            <div className="signature-pad">
+              <canvas
+                ref={canvasRef}
+                className="signature-canvas"
+                onPointerDown={startDraw}
+                onPointerMove={draw}
+                onPointerUp={endDraw}
+                onPointerLeave={endDraw}
+              />
+              <div style={{ display: "flex", gap: 10, marginTop: 8, justifyContent: "center" }}>
+                <button type="button" className="btn btn-secondary" onClick={clearSignature}>Limpar</button>
+                {signatureDataUrl ? (
+                  <img src={signatureDataUrl} alt="assinatura" style={{ height: 60, borderRadius: 4, boxShadow: "0 6px 18px rgba(0,0,0,0.12)" }} />
+                ) : (
+                  <div style={{ color: "#888", alignSelf: "center" }}>Nenhuma assinatura</div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="button-group">

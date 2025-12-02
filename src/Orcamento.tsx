@@ -362,29 +362,25 @@ export default function Orcamento({ onBack }: OrcamentoProps) {
       doc.text("RESOLVE FACILITA", 105, 20, { align: "center" });
 
       doc.setFontSize(10);
-      doc.text(
+      const headerLines = [
         "CPF/CNPJ: 26.083.727/0001-73 - IE: 564.114.999.110",
-        105,
-        26,
-        { align: "center" }
-      );
-      doc.text(
+        "Registro Nacional: 3.087.162.582-8",
         "Endereço: AV OSHIGUE MIFUNE, nº 87 - JARDIM PAULISTANO - PROMISSÃO - SP - CEP: 16.377-706",
-        105,
-        30,
-        { align: "center" }
-      );
-      doc.text(
         "Tel: (14) 99147-1730 | resolvefacilita2024@gmail.com",
-        105,
-        34,
-        { align: "center" }
-      );
-      doc.line(10, 38, 200, 38);
+      ];
+      const headerStartY = 24;
+      const headerLineHeight = 5;
+      headerLines.forEach((line, idx) => {
+        doc.text(line, 105, headerStartY + idx * headerLineHeight, { align: "center" });
+      });
+      // Draw separator positioned above the client block
+      const clientHeadingY = 46; // y position for the "DADOS DO CLIENTE" title
+      const separatorY = clientHeadingY - 4; // a few points above the client heading
+      doc.line(10, separatorY, 200, separatorY);
 
       // Dados do cliente
       doc.setFontSize(12);
-      doc.text("DADOS DO CLIENTE", 10, 46);
+      doc.text("DADOS DO CLIENTE", 10, clientHeadingY);
       doc.setFontSize(10);
       doc.text(
         `Nome: ${cliente.nome || "-"}
