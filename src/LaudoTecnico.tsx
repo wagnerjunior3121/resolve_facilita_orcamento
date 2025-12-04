@@ -502,7 +502,7 @@ export default function LaudoTecnico({ onBack }: LaudoProps) {
       doc.setFontSize(10);
       const headerLines = [
         "CPF/CNPJ: 26.083.727/0001-73 - IE: 564.114.999.110",
-        "Registro Nacional: 3.087.162.582-8",
+        "Registro Nacional: 3.087.162.582-2",
         "Endereço: AV OSHIGUE MIFUNE, nº 87 - JARDIM PAULISTANO - PROMISSÃO - SP - CEP: 16.377-706",
         "Tel: (14) 99147-1730",
         "E-mails: resolvefacilita2024@gmail.com - barbosaederson1@hotmail.com",
@@ -584,6 +584,7 @@ export default function LaudoTecnico({ onBack }: LaudoProps) {
           doc.addImage(signatureDataUrl, sigType as any, 105 - sigW / 2, footerY - 30, sigW, sigH);
           doc.setFontSize(10);
           doc.text("Assinatura do responsável", 105, footerY, { align: "center" });
+          doc.text("Registro Nacional: 3.087.162.582-2", 105, footerY + 6, { align: "center" });
           footerY += 12;
         } catch (e) {
           // ignore signature insertion errors
