@@ -470,7 +470,7 @@ Bairro: ${cliente.bairro || "-"} - ${cliente.cidade || "-"} / ${cliente.uf || "-
             {renderInput("Nome", cliente.nome, (v) => setCliente({ ...cliente, nome: v }))}
             {renderInput("Telefone", cliente.telefone, (v) => setCliente({ ...cliente, telefone: v }))}
             {renderInput("Email", cliente.email, (v) => setCliente({ ...cliente, email: v }))}
-            {renderInput("CPF", cliente.cpf, (v) => setCliente({ ...cliente, cpf: v }))}
+            {renderInput("CPF/CNPJ", cliente.cpf, (v) => setCliente({ ...cliente, cpf: v }))}
             {renderInput("Endereço", cliente.endereco, (v) => setCliente({ ...cliente, endereco: v }))}
             {renderInput("Bairro", cliente.bairro, (v) => setCliente({ ...cliente, bairro: v }))}
             {renderInput("Cidade", cliente.cidade, (v) => setCliente({ ...cliente, cidade: v }))}
