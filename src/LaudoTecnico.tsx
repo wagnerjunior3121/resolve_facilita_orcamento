@@ -521,11 +521,14 @@ export default function LaudoTecnico({ onBack }: LaudoProps) {
       doc.setFontSize(10);
       doc.text("CLIENTE:", 10, 75);
       // print client fields as separate lines to avoid indentation/paragraph issues
+      // Ajusta o rótulo para CPF ou CNPJ automaticamente conforme entrada (11 vs 14 dígitos)
+      const idDigits = (cliente.cpf || "").replace(/\D/g, "");
+      const idLabel = idDigits.length === 14 ? "CNPJ" : "CPF";
       const clientLines = [
         `Nome: ${cliente.nome}`,
         `Telefone: ${cliente.telefone}`,
         `Email: ${cliente.email}`,
-        `CPF: ${cliente.cpf}`,
+        `${idLabel}: ${cliente.cpf}`,
         `Endereço: ${cliente.endereco}, ${cliente.bairro} - ${cliente.cidade}, ${cliente.uf} - CEP: ${cliente.cep}`,
       ];
       const clientStartY = 80;
@@ -638,11 +641,28 @@ export default function LaudoTecnico({ onBack }: LaudoProps) {
           }
 
           if (/cpf/i.test(label)) {
-            const onlyDigits = raw.replace(/\D/g, "").slice(0, 11);
-            const formatted = onlyDigits
-              .replace(/(\d{3})(\d)/, "$1.$2")
-              .replace(/(\d{3})(\d)/, "$1.$2")
-              .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            const onlyDigits = raw.replace(/\D/g, "").slice(0, 14); // suporta CPF (11) ou CNPJ (14)
+            let formatted = onlyDigits;
+            if (onlyDigits.length <= 11) {
+              // Formatação progressiva para CPF: XXX.XXX.XXX-XX
+              formatted = onlyDigits.replace(/^(\d{1,3})(\d{0,3})?(\d{0,3})?(\d{0,2})?$/, (_, a = "", b = "", c = "", d = "") => {
+                let out = a;
+                if (b) out += `.${b}`;
+                if (c) out += `.${c}`;
+                if (d) out += `-${d}`;
+                return out;
+              });
+            } else {
+              // Formatação progressiva para CNPJ: XX.XXX.XXX/XXXX-XX
+              formatted = onlyDigits.replace(/^(\d{1,2})(\d{0,3})?(\d{0,3})?(\d{0,4})?(\d{0,2})?$/, (_, a = "", b = "", c = "", d = "", e = "") => {
+                let out = a;
+                if (b) out += `.${b}`;
+                if (c) out += `.${c}`;
+                if (d) out += `/${d}`;
+                if (e) out += `-${e}`;
+                return out;
+              });
+            }
             onChange(formatted);
             return;
           }
