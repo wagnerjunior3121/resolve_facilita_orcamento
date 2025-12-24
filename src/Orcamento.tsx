@@ -461,7 +461,7 @@ Bairro: ${cliente.bairro || "-"} - ${cliente.cidade || "-"} / ${cliente.uf || "-
         </div>
         <div className="form-container" style={{ width: "100%", maxWidth: "800px", background: "rgba(255, 255, 255, 0.95)", borderRadius: "20px", padding: "40px", boxShadow: "0 20px 60px rgba(0, 0, 0, 0.2)", marginTop: "0px" }}>
           <div style={{ textAlign: "center", marginBottom: "40px", paddingBottom: "30px", borderBottom: "2px solid #f0f0f0" }}>
-            <img src={logo} alt="Resolve Facilita" style={{ maxWidth: "100px", height: "auto", marginBottom: "15px" }} />
+            <img src={logo} alt="Resolve Facilita" style={{ maxWidth: "100px", height: "60px", marginBottom: "15px" }} />
             <h1 style={{ color: "#333", fontSize: "2.5rem", margin: "0 0 10px 0", fontWeight: "800" }}>Gerar Orçamento</h1>
             <p style={{ color: "#666", fontSize: "1rem", margin: 0 }}>Preencha os dados para gerar seu orçamento profissional</p>
           </div>
